@@ -367,8 +367,8 @@ func (c *Connection) send(f frame) error {
 	if err != nil {
 		// shutdown could be re-entrant from signaling notify chans
 		go c.shutdown(&Error{
-			Code:   FrameError,
-			Reason: err.Error(),
+			Code: FrameError,
+			Err:  err,
 		})
 	} else {
 		// Broadcast we sent a frame, reducing heartbeats, only
@@ -521,7 +521,7 @@ func (c *Connection) reader(r io.Reader) {
 		frame, err := frames.ReadFrame()
 
 		if err != nil {
-			c.shutdown(&Error{Code: FrameError, Reason: err.Error()})
+			c.shutdown(&Error{Code: FrameError, Err: err})
 			return
 		}
 

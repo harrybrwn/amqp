@@ -6,6 +6,7 @@
 package amqp
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -68,6 +69,7 @@ type Error struct {
 	Reason  string // description of the error
 	Server  bool   // true when initiated from the server, false when from this library
 	Recover bool   // true when this error can be recovered by retrying later or with different parameters
+	Err     error  // used for error wrapping
 }
 
 func newError(code uint16, text string) *Error {
@@ -80,7 +82,19 @@ func newError(code uint16, text string) *Error {
 }
 
 func (e Error) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("Exception (%d) Reason: %q", e.Code, e.Err.Error())
+	}
 	return fmt.Sprintf("Exception (%d) Reason: %q", e.Code, e.Reason)
+}
+
+func (e *Error) Unwrap() error { return e.Err }
+
+func (e *Error) Is(err error) bool {
+	if errors.Is(e, err) {
+		return true
+	}
+	return errors.Is(e.Err, err)
 }
 
 // Used by header frames to capture routing and header information
