@@ -91,10 +91,15 @@ func (e Error) Error() string {
 func (e *Error) Unwrap() error { return e.Err }
 
 func (e *Error) Is(err error) bool {
-	if errors.Is(e, err) {
+	if e.Err != nil && errors.Is(e.Err, err) {
 		return true
 	}
-	return errors.Is(e.Err, err)
+	if err, ok := err.(*Error); ok {
+		return e.Code == err.Code &&
+			e.Server == err.Server &&
+			e.Recover == err.Recover
+	}
+	return e == err
 }
 
 // Used by header frames to capture routing and header information
